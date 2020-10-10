@@ -1,3 +1,8 @@
+
+
+mod data_loaders;
+mod helpers;
+
 fn main() {
-    println!("Hello, world!");
+    data_loaders::load("data/combined_data_1.txt");
 }
