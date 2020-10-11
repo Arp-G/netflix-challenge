@@ -56,6 +56,30 @@ fn load(file_path: &str) -> HashMap<u32, HashMap<u32, Rating>> {
     ratings_hash
 }
 
+pub fn load_probe_data(file_path: &str) -> Vec<(u32, u32)> {
+    let file = File::open(file_path).unwrap();
+    let reader = BufReader::new(file);
+
+    let mut data_vec: Vec<(u32, u32)> = Vec::new();
+    let mut movie_id = 1;
+
+    for line in reader.lines() {
+        let mut result = line.unwrap();
+
+        if result.chars().last().unwrap() == ':' {
+            result.pop(); // remove ":"
+            movie_id = result.parse::<u32>().unwrap();
+        } else {
+            let mut iter = result.split(",");
+            let user_id = iter.next().unwrap().parse::<u32>().unwrap();
+
+            data_vec.push((user_id, movie_id));
+        }
+    }
+
+    data_vec
+}
+
 fn combine_hashes(
     combined_ratings: &mut HashMap<u32, HashMap<u32, Rating>>,
     new_ratings: HashMap<u32, HashMap<u32, Rating>>,

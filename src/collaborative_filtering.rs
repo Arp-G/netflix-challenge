@@ -1,9 +1,10 @@
 #![allow(unused)]
 use crate::common::Rating;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 
 const MOVIE_IDS: u32 = 17771; // Movie Ids from 1 to 17770
-const K: usize = 10; // PICK "K" most similar users for prediction
+const K: usize = 500; // PICK "K" most similar users for prediction
 
 pub fn center_ratings(all_ratings: &mut HashMap<u32, HashMap<u32, Rating>>) {
     for (_user_id, user_ratings) in all_ratings {
@@ -44,6 +45,9 @@ fn calculate_rating(
                 .get(&target_movie_id)
                 .unwrap()
                 .rating;
+
+            // println!("Similarity {:?}", similarity);
+            // println!("Rating {:?}", rating);
             (
                 numerator + rating as f64 * similarity,
                 denominator + similarity,
@@ -52,6 +56,11 @@ fn calculate_rating(
     );
 
     let prediction = (numerator / denominator);
+
+    // println!(
+    //     "Numerator: {}, Denominator: {}, prediction: {}",
+    //     numerator, denominator, prediction
+    // );
 
     if (prediction - prediction.floor() < 0.5) {
         prediction.floor() as u8
@@ -77,7 +86,13 @@ fn find_k_most_similar_users(
         })
         .collect::<Vec<(u32, f64)>>();
 
-    similar_users.sort_unstable_by(|(_, sim1), (_, sim2)| sim2.partial_cmp(sim1).unwrap());
+    // here .unwrap_or(Ordering::Less) is for a case where similarity was Nan,
+    // Ordering::Less ensures they will appear last in the sorted list
+    // this happens when a user as rated all movies equally so centered_rating = 0,
+    // thus magnitude(users_rating) = 0, thus denominator when
+    // calcutaing cosine similarity becomes 0, resulting in Nan value
+    similar_users
+        .sort_unstable_by(|(_, sim1), (_, sim2)| sim2.partial_cmp(sim1).unwrap_or(Ordering::Less));
 
     similar_users
         .into_iter()
@@ -108,8 +123,17 @@ fn cosine_similarity(
     // |A|.|B|
     let denominator = magnitude(user1_ratings) * magnitude(user2_ratings);
 
-    // A.B / (|A|.|B|)
-    numerator / denominator
+    let similarity = numerator / denominator;
+
+    if (similarity.is_normal()) {
+        similarity
+    } else {
+        if (similarity == 0.0) {
+            0.0
+        } else {
+            -1.0
+        }
+    }
 }
 
 fn magnitude(ratings: &HashMap<u32, Rating>) -> f64 {
