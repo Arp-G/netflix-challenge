@@ -78,7 +78,7 @@ fn find_k_most_similar_users(
 
                 let similarity = match cache.get(&key) {
                     Some(similarity) => {
-                        println!("Cache hit for {}", key);
+                       // println!("Cache hit for {}", key);
                         *similarity
                     },
                     None => {
