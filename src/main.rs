@@ -20,7 +20,14 @@ fn main() {
 
     collaborative_filtering::center_ratings(&mut data);
 
-    println!("{:?}", data);
+    println!(
+        "{:?}",
+        collaborative_filtering::cosine_similarity(1488844, 1488844, &data,)
+    );
+    println!(
+        "{:?}",
+        collaborative_filtering::cosine_similarity(1488844, 1248029, &data)
+    );
 
     match now.elapsed() {
         Ok(elapsed) => {
