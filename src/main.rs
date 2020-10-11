@@ -18,16 +18,16 @@ fn main() {
         "data/combined_data_4.txt",
     ]);
 
-    collaborative_filtering::center_ratings(&mut data);
+    // collaborative_filtering::center_ratings(&mut data);
 
-    println!(
-        "{:?}",
-        collaborative_filtering::cosine_similarity(1488844, 1488844, &data,)
-    );
-    println!(
-        "{:?}",
-        collaborative_filtering::cosine_similarity(1488844, 1248029, &data)
-    );
+    // println!(
+    //     "{:?}",
+    //     collaborative_filtering::cosine_similarity(1488844, 1488844, &data,)
+    // );
+    // println!(
+    //     "{:?}",
+    //     collaborative_filtering::cosine_similarity(1488844, 1248029, &data)
+    // );
 
     match now.elapsed() {
         Ok(elapsed) => {

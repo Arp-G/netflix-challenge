@@ -20,12 +20,51 @@ pub fn center_ratings(all_ratings: &mut HashMap<u32, HashMap<u32, Rating>>) {
     }
 }
 
+pub fn predict_rating(
+    user_id: u32,
+    movie_id: u32,
+    all_ratings: &HashMap<u32, HashMap<u32, Rating>>,
+) -> u8 {
+    let similar_users = find_k_most_similar_users(user_id, movie_id, all_ratings);
+
+    calculate_rating(similar_users, movie_id, all_ratings)
+}
+
+fn calculate_rating(
+    similar_users: Vec<(u32, f64)>,
+    target_movie_id: u32,
+    all_ratings: &HashMap<u32, HashMap<u32, Rating>>,
+) -> u8 {
+    let (numerator, denominator) = similar_users.iter().fold(
+        (0.0, 0.0),
+        |(numerator, denominator), (user_id, similarity)| {
+            let rating = all_ratings
+                .get(user_id)
+                .unwrap()
+                .get(&target_movie_id)
+                .unwrap()
+                .rating;
+            (
+                numerator + rating as f64 * similarity,
+                denominator + similarity,
+            )
+        },
+    );
+
+    let prediction = (numerator / denominator);
+
+    if (prediction - prediction.floor() < 0.5) {
+        prediction.floor() as u8
+    } else {
+        prediction.ceil() as u8
+    }
+}
+
 fn find_k_most_similar_users(
     target_user_id: u32,
     target_movie_id: u32,
     all_ratings: &HashMap<u32, HashMap<u32, Rating>>,
 ) -> Vec<(u32, f64)> {
-
     let mut similar_users: Vec<(u32, f64)> = all_ratings
         .iter()
         .filter_map(|(user_id, user_ratings)| {
@@ -37,13 +76,16 @@ fn find_k_most_similar_users(
             }
         })
         .collect::<Vec<(u32, f64)>>();
-        
+
     similar_users.sort_unstable_by(|(_, sim1), (_, sim2)| sim2.partial_cmp(sim1).unwrap());
 
-    similar_users.into_iter().take(K).collect::<Vec<(u32, f64)>>()
+    similar_users
+        .into_iter()
+        .take(K)
+        .collect::<Vec<(u32, f64)>>()
 }
 
-pub fn cosine_similarity(
+fn cosine_similarity(
     user1_id: u32,
     user2_id: u32,
     all_ratings: &HashMap<u32, HashMap<u32, Rating>>,
