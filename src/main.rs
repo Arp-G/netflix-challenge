@@ -1,6 +1,8 @@
 mod collaborative_filtering;
 mod common;
 mod data_loaders;
+mod similarity_cache;
+use std::collections::HashMap;
 use std::time::SystemTime;
 
 extern crate colored;
@@ -27,14 +29,17 @@ fn main() {
 
     let mut correct_count = 0;
     let mut almost_correct_count = 0;
+    let mut cache = HashMap::new();
 
-    // This test took 28.63 min, 
-    // total predictions made: 500, 
-    // correct predictions: 207, 
+    // This test took 28.63 min,
+    // total predictions made: 500,
+    // correct predictions: 207,
     // almost correct predictions: 243
+    // Without caching for 100 ratings time = 131 sec, with caching: 123 sec
     for (user_id, movie_id) in probe_data.iter().take(500) {
         let actual = data.get(&user_id).unwrap().get(&movie_id).unwrap().rating;
-        let prediction = collaborative_filtering::predict_rating(*user_id, *movie_id, &data);
+        let prediction =
+            collaborative_filtering::predict_rating(*user_id, *movie_id, &data, &mut cache);
 
         let diff = (actual as i32 - prediction as i32).abs();
 
@@ -53,8 +58,7 @@ fn main() {
 
     println!(
         "Correct = {}, Almost Correct = {}",
-        correct_count,
-        almost_correct_count,
+        correct_count, almost_correct_count,
     );
 
     match now.elapsed() {

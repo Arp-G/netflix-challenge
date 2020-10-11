@@ -1,5 +1,6 @@
 #![allow(unused)]
 use crate::common::Rating;
+use crate::similarity_cache;
 use std::cmp::Ordering;
 use std::collections::HashMap;
 
@@ -25,8 +26,9 @@ pub fn predict_rating(
     user_id: u32,
     movie_id: u32,
     all_ratings: &HashMap<u32, HashMap<u32, Rating>>,
+    cache: &mut HashMap<String, f64>,
 ) -> u8 {
-    let similar_users = find_k_most_similar_users(user_id, movie_id, all_ratings);
+    let similar_users = find_k_most_similar_users(user_id, movie_id, all_ratings, cache);
 
     calculate_rating(similar_users, movie_id, all_ratings)
 }
@@ -46,8 +48,6 @@ fn calculate_rating(
                 .unwrap()
                 .rating;
 
-            // println!("Similarity {:?}", similarity);
-            // println!("Rating {:?}", rating);
             (
                 numerator + rating as f64 * similarity,
                 denominator + similarity,
@@ -56,11 +56,6 @@ fn calculate_rating(
     );
 
     let prediction = (numerator / denominator);
-
-    // println!(
-    //     "Numerator: {}, Denominator: {}, prediction: {}",
-    //     numerator, denominator, prediction
-    // );
 
     if (prediction - prediction.floor() < 0.5) {
         prediction.floor() as u8
@@ -73,12 +68,26 @@ fn find_k_most_similar_users(
     target_user_id: u32,
     target_movie_id: u32,
     all_ratings: &HashMap<u32, HashMap<u32, Rating>>,
+    cache: &mut HashMap<String, f64>,
 ) -> Vec<(u32, f64)> {
     let mut similar_users: Vec<(u32, f64)> = all_ratings
         .iter()
         .filter_map(|(user_id, user_ratings)| {
             if user_ratings.contains_key(&target_movie_id) && *user_id != target_user_id {
-                let similarity = cosine_similarity(target_user_id, *user_id, &all_ratings);
+                let key = similarity_cache::get_key(target_user_id, *user_id);
+
+                let similarity = match cache.get(&key) {
+                    Some(similarity) => {
+                        println!("Cache hit for {}", key);
+                        *similarity
+                    },
+                    None => {
+                        let sim = cosine_similarity(target_user_id, *user_id, &all_ratings);
+                        similarity_cache::store_in_cache(cache, key, sim);
+                        sim
+                    }
+                };
+
                 Some((*user_id, similarity))
             } else {
                 None
