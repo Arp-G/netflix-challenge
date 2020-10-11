@@ -1,24 +1,9 @@
+use crate::common::Rating;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
 use std::sync::mpsc;
 use std::thread;
-// use crate::helpers;
-
-#[derive(Debug)]
-pub struct Rating {
-    rating: u8,
-    centered_rating: u8,
-}
-
-impl Rating {
-    pub fn new(rating: u8) -> Rating {
-        Rating {
-            rating: rating,
-            centered_rating: 0,
-        }
-    }
-}
 
 pub fn parallel_loader(files: Vec<&'static str>) -> HashMap<u32, HashMap<u32, Rating>> {
     let (tx, rx) = mpsc::channel();
