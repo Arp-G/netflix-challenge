@@ -27,7 +27,7 @@ pub fn predict_rating(
     movie_id: u32,
     all_ratings: &HashMap<u32, HashMap<u32, Rating>>,
     cache: &mut HashMap<String, f64>,
-) -> u8 {
+) -> f64 {
     let similar_users = find_k_most_similar_users(user_id, movie_id, all_ratings, cache);
 
     calculate_rating(similar_users, movie_id, all_ratings)
@@ -37,7 +37,7 @@ fn calculate_rating(
     similar_users: Vec<(u32, f64)>,
     target_movie_id: u32,
     all_ratings: &HashMap<u32, HashMap<u32, Rating>>,
-) -> u8 {
+) -> f64 {
     let (numerator, denominator) = similar_users.iter().fold(
         (0.0, 0.0),
         |(numerator, denominator), (user_id, similarity)| {
@@ -55,12 +55,20 @@ fn calculate_rating(
         },
     );
 
-    let prediction = (numerator / denominator);
+    let mut prediction = (numerator / denominator);
 
     if (prediction - prediction.floor() < 0.5) {
-        prediction.floor() as u8
+        prediction.floor() as f64;
     } else {
-        prediction.ceil() as u8
+        prediction.ceil() as f64;
+    }
+
+    if (prediction < 0.0) {
+        0.0
+    } else if (prediction > 5.0) {
+        5.0
+    } else {
+        prediction
     }
 }
 
@@ -78,9 +86,9 @@ fn find_k_most_similar_users(
 
                 let similarity = match cache.get(&key) {
                     Some(similarity) => {
-                       // println!("Cache hit for {}", key);
+                        // println!("Cache hit for {}", key);
                         *similarity
-                    },
+                    }
                     None => {
                         let sim = cosine_similarity(target_user_id, *user_id, &all_ratings);
                         similarity_cache::store_in_cache(cache, key, sim);
