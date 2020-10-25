@@ -22,6 +22,25 @@ pub fn center_ratings(all_ratings: &mut HashMap<u32, HashMap<u32, Rating>>) {
     }
 }
 
+// pub fn create_similarity_matrix(data: &HashMap<u32, HashMap<u32, Rating>>) {
+//     let mut cache = HashMap::new();
+//     for user1 in data.keys() {
+//         for user2 in data.keys() {
+//             let key = similarity_cache::get_key(*user1, *user2);
+
+//             if let None = cache.get(&key) {
+//                 cache.insert(key, cosine_similarity(*user1, *user2, &data));
+//             };
+
+//             let len = cache.keys().len();
+
+//             if (len % 1000 == 0) {
+//                 println!("{}", len);
+//             }
+//         }
+//     }
+// }
+
 pub fn predict_rating(
     user_id: u32,
     movie_id: u32,
@@ -85,10 +104,7 @@ fn find_k_most_similar_users(
                 let key = similarity_cache::get_key(target_user_id, *user_id);
 
                 let similarity = match cache.get(&key) {
-                    Some(similarity) => {
-                        // println!("Cache hit for {}", key);
-                        *similarity
-                    }
+                    Some(similarity) => *similarity,
                     None => {
                         let sim = cosine_similarity(target_user_id, *user_id, &all_ratings);
                         similarity_cache::store_in_cache(cache, key, sim);
