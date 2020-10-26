@@ -18,12 +18,9 @@ fn main() {
     // Merging hashes takes ~4 seconds,
     // Centering ratings: ~6 seconds
     // So total time to load data parallelly = 21 seconds(release mode) (221 seconds in debug mode)
-    // For 100 ratings...
-    // taking floor of prediction gave, Correct = 24, Almost Correct = 45
-    // taking ceil of predictions gave, Correct = 41, Almost Correct = 47
-    // Rounding up predictions gave, Correct = 38, Almost Correct = 48
-
     // 862 sec for 500 data with  0.9704625880814568 RMSE
+    // 1820(1936 without cache) sec for 1000 data with 0.9243016074046603 RMSE
+    // 28372 sec for 3000 data with 0.8109948979161812 RMSE
 
     let mut data: HashMap<u32, HashMap<u32, Rating>> = data_loaders::parallel_loader(vec![
         "data/combined_data_1.txt",
@@ -36,7 +33,7 @@ fn main() {
 
     let probe_data: Vec<(u32, u32)> = data_loaders::load_probe_data("data/probe.txt")
         .into_iter()
-        .take(500)
+        .take(1000)
         .collect();
 
     // let mut correct_count = 0;
@@ -61,7 +58,7 @@ fn main() {
         });
 
     println!("FINAL ACC = {}", square_error);
-    let root_mean_square_error = (square_error / 500.0).sqrt();
+    let root_mean_square_error = (square_error / 1000.0).sqrt();
 
     println!("RMS = {}", root_mean_square_error);
 
